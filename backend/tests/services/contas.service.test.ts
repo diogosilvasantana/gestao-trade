@@ -2,7 +2,7 @@
 import { Decimal } from 'decimal.js';
 import { prismaMock } from '../setup/prisma-mock';
 import { ContasService } from '../../src/services/contas.service';
-import { CreateContaRealDTO } from '../../src/types/contas';
+import { CreateContaMesaDTO, CreateContaRealDTO } from '../../src/types/contas';
 
 describe('ContasService', () => {
     it('deve criar uma conta real com sucesso calculando os contratos', async () => {
@@ -44,5 +44,33 @@ describe('ContasService', () => {
         // Usamos o '!' aqui para garantir ao TS que contaReal existe neste contexto
         expect(result.contaReal!.contratosAtuais).toBe(3);
         expect(prismaMock.$transaction).toHaveBeenCalled();
+    });
+
+    it('deve criar uma conta mesa com sucesso', async () => {
+        const dto: CreateContaMesaDTO = {
+            saldoInicial: new Decimal(100000),
+            tipoMesa: 'Avaliacao',
+            meta: new Decimal(10000),
+            perdaDiariaMaxima: new Decimal(3000),
+            dataInicio: new Date()
+        };
+
+        const expectedConta = {
+            id: '456',
+            tipo: 'MesaProprietaria',
+            saldoInicial: new Decimal(100000),
+            saldoAtual: new Decimal(100000),
+            contaMesa: {
+                id: '2',
+                tipo: 'Avaliacao'
+            }
+        };
+
+        prismaMock.$transaction.mockResolvedValue(expectedConta);
+
+        const result = await ContasService.criarContaMesa(dto);
+
+        expect(result).toBeDefined();
+        expect(result.tipo).toBe('MesaProprietaria');
     });
 });

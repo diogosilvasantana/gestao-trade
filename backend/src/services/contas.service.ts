@@ -40,4 +40,38 @@ export class ContasService {
             return conta;
         });
     }
+
+    // Adicione dentro de ContasService no backend/src/services/contas.service.ts
+    static async criarContaMesa(data: CreateContaMesaDTO) {
+        return prisma.$transaction(async (tx) => {
+            return tx.conta.create({
+                data: {
+                    tipo: 'MesaProprietaria',
+                    descricao: data.descricao,
+                    saldoInicial: data.saldoInicial,
+                    saldoAtual: data.saldoInicial,
+                    rollbackAtivo: data.rollbackAtivo ?? true,
+                    contaMesa: {
+                        create: {
+                            tipo: data.tipoMesa,
+                            meta: data.meta,
+                            perdaDiariaMaxima: data.perdaDiariaMaxima,
+                            eliminaNaPerda: data.eliminaNaPerda ?? true,
+                            dataInicio: data.dataInicio,
+                            dataFim: data.dataFim,
+                            statusAprovacao: 'Em Avaliacao'
+                        }
+                    },
+                    historicoSaldo: {
+                        create: {
+                            saldoAnterior: new Decimal(0),
+                            saldoNovo: data.saldoInicial,
+                            tipoMovimento: 'Aporte'
+                        }
+                    }
+                },
+                include: { contaMesa: true }
+            });
+        });
+    }
 }
