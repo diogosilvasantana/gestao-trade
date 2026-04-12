@@ -1,0 +1,82 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Conta {
+  id            String  @id @default(cuid())
+  tipo          String // 'Real' ou 'MesaProprietaria'
+  descricao     String?
+  status        String  @default("Ativa")
+  saldoInicial  Decimal @db.Decimal(15, 2)
+  saldoAtual    Decimal @db.Decimal(15, 2)
+  rollbackAtivo Boolean @default(true) // Configuração da regra 3.1
+
+  contaReal      ContaReal?
+  contaMesa      ContaMesa?
+  operacoes      Operacao[]
+  historicoSaldo HistoricoSaldo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ContaReal {
+  id                 String  @id @default(cuid())
+  contaId            String  @unique
+  conta              Conta   @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  corretora          String
+  tipoOperacao       String // 'B3' ou 'Internacional'
+  moeda              String  @default("BRL")
+  contratosAtuais    Int     @default(1)
+  regraContratosBase Decimal @default(1000) @db.Decimal(15, 2) // Editável conforme regra 1.2
+}
+
+model ContaMesa {
+  id                String    @id @default(cuid())
+  contaId           String    @unique
+  conta             Conta     @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  tipo              String // 'Avaliacao', 'Incubadora', 'Patrocinada'
+  meta              Decimal   @db.Decimal(15, 2)
+  perdaDiariaMaxima Decimal   @db.Decimal(15, 2)
+  eliminaNaPerda    Boolean   @default(true)
+  dataInicio        DateTime
+  dataFim           DateTime?
+  statusAprovacao   String    @default("Em Avaliacao")
+}
+
+model Operacao {
+  id           String   @id @default(cuid())
+  contaId      String
+  conta        Conta    @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  data         DateTime @default(now())
+  ativo        String
+  quantidade   Int
+  precoEntrada Decimal  @db.Decimal(15, 4) // Precisão de 4 casas para forex/ativos inter.
+  precoSaida   Decimal  @db.Decimal(15, 4)
+  comissao     Decimal  @default(0) @db.Decimal(10, 2) // Regra 2.1
+  resultado    Decimal  @db.Decimal(15, 2) // Já inclui comissão
+  tipo         String // 'Compra' ou 'Venda'
+  observacoes  String? // Regra 2.2
+  status       String   @default("Executada")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model HistoricoSaldo {
+  id                  String   @id @default(cuid())
+  contaId             String
+  conta               Conta    @relation(fields: [contaId], references: [id], onDelete: Cascade)
+  data                DateTime @default(now())
+  saldoAnterior       Decimal  @db.Decimal(15, 2)
+  saldoNovo           Decimal  @db.Decimal(15, 2)
+  tipoMovimento       String // 'Operacao', 'Aporte', 'Saque', 'Ajuste'
+  contratosAnteriores Int?
+  contratosNovos      Int?
+  houveRollback       Boolean  @default(false)
+  motivoRollback      String?
+}
