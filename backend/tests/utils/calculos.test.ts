@@ -1,4 +1,3 @@
-// backend/tests/utils/calculos.test.ts
 import { Decimal } from 'decimal.js';
 import { calcularContratos, avaliarRollback } from '../../src/utils/calculos';
 

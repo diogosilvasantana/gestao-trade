@@ -1,4 +1,3 @@
-// backend/src/utils/calculos.ts
 import { Decimal } from 'decimal.js';
 
 export function calcularContratos(saldoAtual: Decimal, basePorContrato: Decimal): number {
