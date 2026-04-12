@@ -2,7 +2,10 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import pinoHttp from 'pino-http';
 import { logger } from './config/logger';
+
+// IMPORTAR AS ROTAS:
 import { contasRoutes } from './routes/contas.routes';
+import { operacoesRoutes } from './routes/operacoes.routes';
 
 const app = express();
 
@@ -10,7 +13,9 @@ app.use(cors());
 app.use(express.json());
 app.use(pinoHttp({ logger }));
 
+// ADICIONAR AO PIPELINE
 app.use('/contas', contasRoutes);
+app.use('/operacoes', operacoesRoutes);
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
