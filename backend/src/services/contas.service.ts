@@ -1,4 +1,3 @@
-// backend/src/services/contas.service.ts
 import { prisma } from '../config/prisma';
 import { CreateContaRealDTO, CreateContaMesaDTO } from '../types/contas';
 import { calcularContratos } from '../utils/calculos';
@@ -41,7 +40,6 @@ export class ContasService {
         });
     }
 
-    // Adicione dentro de ContasService no backend/src/services/contas.service.ts
     static async criarContaMesa(data: CreateContaMesaDTO) {
         return prisma.$transaction(async (tx) => {
             return tx.conta.create({
@@ -72,6 +70,19 @@ export class ContasService {
                 },
                 include: { contaMesa: true }
             });
+        });
+    }
+
+    static async listarContas() {
+        return prisma.conta.findMany({
+            include: { contaReal: true, contaMesa: true }
+        });
+    }
+
+    static async buscarPorId(id: string) {
+        return prisma.conta.findUnique({
+            where: { id },
+            include: { contaReal: true, contaMesa: true }
         });
     }
 }

@@ -73,4 +73,21 @@ describe('ContasService', () => {
         expect(result).toBeDefined();
         expect(result.tipo).toBe('MesaProprietaria');
     });
+
+    // backend/tests/services/contas.service.test.ts
+    it('deve listar todas as contas incluindo detalhes real ou mesa', async () => {
+        prismaMock.conta.findMany.mockResolvedValue([]);
+        const result = await ContasService.listarContas();
+        expect(prismaMock.conta.findMany).toHaveBeenCalledWith({ include: { contaReal: true, contaMesa: true } });
+        expect(result).toEqual([]);
+    });
+
+    it('deve buscar uma conta por id', async () => {
+        prismaMock.conta.findUnique.mockResolvedValue(null);
+        await ContasService.buscarPorId('123');
+        expect(prismaMock.conta.findUnique).toHaveBeenCalledWith({
+            where: { id: '123' },
+            include: { contaReal: true, contaMesa: true }
+        });
+    });
 });
