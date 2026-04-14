@@ -4,24 +4,22 @@ import { prismaMock } from '../setup/prisma-mock';
 import { OperacoesService } from '../../src/services/operacoes.service';
 import { CreateOperacaoDTO } from '../../src/types/operacoes';
 
-// Simularemos o modulo de calculos para não depender dele internamente
 jest.mock('../../src/utils/calculos', () => ({
     avaliarRollback: jest.fn().mockReturnValue({ houveRollback: false, novosContratos: 3 })
 }));
 
 describe('OperacoesService', () => {
-    it('deve inserir uma operacao com sucesso atualizando saldos sem causar rollback', async () => {
+    it('deve calcular o resultado automaticamente e lançar a operação atualizando o saldo', async () => {
         const dto: CreateOperacaoDTO = {
             contaId: 'conta-123',
-            ativo: 'WIN',
+            ativo: 'WINJ26',
             quantidade: 5,
-            precoEntrada: new Decimal(100000),
-            precoSaida: new Decimal(100500),
+            precoEntrada: new Decimal(120000),
+            precoSaida: new Decimal(120500),
             tipo: 'Compra',
-            resultado: new Decimal(500) // lucrou 500 reais 
+            // resultado NÃO é passado — calculado no service: (120500 - 120000) * 5 = 2500
         };
 
-        // O Mock precisa nos retornar a conta para sabermos os parametros de rollback
         prismaMock.conta.findUnique.mockResolvedValue({
             id: 'conta-123',
             tipo: 'Real',
@@ -32,13 +30,15 @@ describe('OperacoesService', () => {
 
         prismaMock.$transaction.mockResolvedValue({
             id: 'op-123',
-            resultado: new Decimal(500)
+            resultado: new Decimal(2500)
         } as any);
 
         const result = await OperacoesService.lancarOperacao(dto);
 
         expect(result).toBeDefined();
-        expect(prismaMock.conta.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'conta-123' } }));
+        expect(prismaMock.conta.findUnique).toHaveBeenCalledWith(
+            expect.objectContaining({ where: { id: 'conta-123' } })
+        );
         expect(prismaMock.$transaction).toHaveBeenCalled();
     });
-});
+});

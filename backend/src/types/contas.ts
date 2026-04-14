@@ -22,3 +22,28 @@ export interface CreateContaMesaDTO {
     dataInicio: Date;
     dataFim?: Date;
 }
+
+export interface EditarContaDTO {
+    descricao?: string;
+    status?: string;
+    rollbackAtivo?: boolean;
+    contaReal?: {
+        corretora?: string;
+        regraContratosBase?: Decimal;
+    };
+    contaMesa?: {
+        meta?: Decimal;
+        perdaDiariaMaxima?: Decimal;
+        eliminaNaPerda?: boolean;
+        dataFim?: Date;
+        statusAprovacao?: string;
+    };
+}
+
+export interface FiltrosOperacoesDTO {
+    ativo?: string;
+    tipo?: 'Compra' | 'Venda';
+    resultado?: 'Lucro' | 'Prejuizo';
+    dataInicio?: Date;
+    dataFim?: Date;
+}

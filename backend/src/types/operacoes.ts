@@ -3,13 +3,13 @@ import { Decimal } from 'decimal.js';
 
 export interface CreateOperacaoDTO {
     contaId: string;
-    data?: Date; // se omitida, default now()
+    data?: Date;
     ativo: string;
     quantidade: number;
     precoEntrada: Decimal;
     precoSaida: Decimal;
     tipo: 'Compra' | 'Venda';
     comissao?: Decimal;
-    resultado: Decimal; // valor já processado com a comissao para abater no saldo
     observacoes?: string;
-}
+    resultado?: Decimal; // opcional para importações CSV onde o PL exato é lido
+}

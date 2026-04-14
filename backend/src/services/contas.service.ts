@@ -1,7 +1,7 @@
 import { prisma } from '../config/prisma';
-import { CreateContaRealDTO, CreateContaMesaDTO } from '../types/contas';
+import { CreateContaRealDTO, CreateContaMesaDTO, EditarContaDTO, FiltrosOperacoesDTO } from '../types/contas';
 import { calcularContratos } from '../utils/calculos';
-import { Decimal } from 'decimal.js'; // <-- Import adicionado
+import { Decimal } from 'decimal.js';
 
 export class ContasService {
     static async criarContaReal(data: CreateContaRealDTO) {
@@ -47,7 +47,7 @@ export class ContasService {
                     tipo: 'MesaProprietaria',
                     descricao: data.descricao,
                     saldoInicial: data.saldoInicial,
-                    saldoAtual: data.saldoInicial,
+                    saldoAtual: new Decimal(0),
                     rollbackAtivo: data.rollbackAtivo ?? true,
                     contaMesa: {
                         create: {
@@ -83,6 +83,84 @@ export class ContasService {
         return prisma.conta.findUnique({
             where: { id },
             include: { contaReal: true, contaMesa: true }
+        });
+    }
+
+    static async editar(id: string, data: EditarContaDTO) {
+        const conta = await prisma.conta.findUnique({
+            where: { id },
+            include: { contaReal: true, contaMesa: true }
+        });
+
+        if (!conta) throw new Error('Conta não encontrada');
+
+        return prisma.$transaction(async (tx) => {
+            await tx.conta.update({
+                where: { id },
+                data: {
+                    descricao: data.descricao,
+                    status: data.status,
+                    rollbackAtivo: data.rollbackAtivo,
+                }
+            });
+
+            if (conta.tipo === 'Real' && conta.contaReal && data.contaReal) {
+                await tx.contaReal.update({
+                    where: { id: conta.contaReal.id },
+                    data: {
+                        corretora: data.contaReal.corretora,
+                        regraContratosBase: data.contaReal.regraContratosBase,
+                    }
+                });
+            }
+
+            if (conta.tipo === 'MesaProprietaria' && conta.contaMesa && data.contaMesa) {
+                await tx.contaMesa.update({
+                    where: { id: conta.contaMesa.id },
+                    data: {
+                        meta: data.contaMesa.meta,
+                        perdaDiariaMaxima: data.contaMesa.perdaDiariaMaxima,
+                        eliminaNaPerda: data.contaMesa.eliminaNaPerda,
+                        dataFim: data.contaMesa.dataFim,
+                        statusAprovacao: data.contaMesa.statusAprovacao,
+                    }
+                });
+            }
+
+            return tx.conta.findUnique({
+                where: { id },
+                include: { contaReal: true, contaMesa: true }
+            });
+        });
+    }
+
+    static async listarOperacoes(contaId: string, filtros: FiltrosOperacoesDTO = {}) {
+        const where: Record<string, unknown> = { contaId };
+
+        if (filtros.ativo) where['ativo'] = { contains: filtros.ativo, mode: 'insensitive' };
+        if (filtros.tipo) where['tipo'] = filtros.tipo;
+        if (filtros.resultado === 'Lucro') where['resultado'] = { gt: 0 };
+        if (filtros.resultado === 'Prejuizo') where['resultado'] = { lt: 0 };
+        if (filtros.dataInicio || filtros.dataFim) {
+            where['data'] = {
+                ...(filtros.dataInicio && { gte: filtros.dataInicio }),
+                ...(filtros.dataFim && { lte: filtros.dataFim }),
+            };
+        }
+
+        return prisma.operacao.findMany({
+            where,
+            orderBy: { data: 'desc' },
+        });
+    }
+
+    static async listarHistorico(contaId: string) {
+        const conta = await prisma.conta.findUnique({ where: { id: contaId } });
+        if (!conta) throw new Error('Conta não encontrada');
+
+        return prisma.historicoSaldo.findMany({
+            where: { contaId },
+            orderBy: { data: 'desc' },
         });
     }
 }

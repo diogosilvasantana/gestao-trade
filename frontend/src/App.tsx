@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Contas } from './pages/Contas';
 import { Operacoes } from './pages/Operacoes';
 import { Historico } from './pages/Historico';
+import { Configuracoes } from './pages/Configuracoes';
 
 // Depois (export default):
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Route path="contas" element={<Contas />} />
           <Route path="operacoes" element={<Operacoes />} />
           <Route path="historico" element={<Historico />} />
+          <Route path="configuracoes" element={<Configuracoes />} />
         </Route>
       </Routes>
     </BrowserRouter>

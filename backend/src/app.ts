@@ -6,6 +6,7 @@ import { logger } from './config/logger';
 // IMPORTAR AS ROTAS:
 import { contasRoutes } from './routes/contas.routes';
 import { operacoesRoutes } from './routes/operacoes.routes';
+import { taxasRoutes } from './routes/taxas.routes';
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(pinoHttp({ logger }));
 // ADICIONAR AO PIPELINE
 app.use('/contas', contasRoutes);
 app.use('/operacoes', operacoesRoutes);
+app.use('/taxas', taxasRoutes);
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });

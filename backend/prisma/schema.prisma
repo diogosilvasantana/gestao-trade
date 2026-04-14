@@ -8,12 +8,12 @@ generator client {
 
 model Conta {
   id            String  @id @default(cuid())
-  tipo          String // 'Real' ou 'MesaProprietaria'
+  tipo          String
   descricao     String?
   status        String  @default("Ativa")
   saldoInicial  Decimal @db.Decimal(15, 2)
   saldoAtual    Decimal @db.Decimal(15, 2)
-  rollbackAtivo Boolean @default(true) // Configuração da regra 3.1
+  rollbackAtivo Boolean @default(true)
 
   contaReal      ContaReal?
   contaMesa      ContaMesa?
@@ -29,17 +29,17 @@ model ContaReal {
   contaId            String  @unique
   conta              Conta   @relation(fields: [contaId], references: [id], onDelete: Cascade)
   corretora          String
-  tipoOperacao       String // 'B3' ou 'Internacional'
+  tipoOperacao       String
   moeda              String  @default("BRL")
   contratosAtuais    Int     @default(1)
-  regraContratosBase Decimal @default(1000) @db.Decimal(15, 2) // Editável conforme regra 1.2
+  regraContratosBase Decimal @default(1000) @db.Decimal(15, 2)
 }
 
 model ContaMesa {
   id                String    @id @default(cuid())
   contaId           String    @unique
   conta             Conta     @relation(fields: [contaId], references: [id], onDelete: Cascade)
-  tipo              String // 'Avaliacao', 'Incubadora', 'Patrocinada'
+  tipo              String
   meta              Decimal   @db.Decimal(15, 2)
   perdaDiariaMaxima Decimal   @db.Decimal(15, 2)
   eliminaNaPerda    Boolean   @default(true)
@@ -55,12 +55,12 @@ model Operacao {
   data         DateTime @default(now())
   ativo        String
   quantidade   Int
-  precoEntrada Decimal  @db.Decimal(15, 4) // Precisão de 4 casas para forex/ativos inter.
+  precoEntrada Decimal  @db.Decimal(15, 4)
   precoSaida   Decimal  @db.Decimal(15, 4)
-  comissao     Decimal  @default(0) @db.Decimal(10, 2) // Regra 2.1
-  resultado    Decimal  @db.Decimal(15, 2) // Já inclui comissão
-  tipo         String // 'Compra' ou 'Venda'
-  observacoes  String? // Regra 2.2
+  comissao     Decimal  @default(0) @db.Decimal(10, 2)
+  resultado    Decimal  @db.Decimal(15, 2)
+  tipo         String
+  observacoes  String?
   status       String   @default("Executada")
 
   createdAt DateTime @default(now())
@@ -74,9 +74,20 @@ model HistoricoSaldo {
   data                DateTime @default(now())
   saldoAnterior       Decimal  @db.Decimal(15, 2)
   saldoNovo           Decimal  @db.Decimal(15, 2)
-  tipoMovimento       String // 'Operacao', 'Aporte', 'Saque', 'Ajuste'
+  tipoMovimento       String
   contratosAnteriores Int?
   contratosNovos      Int?
   houveRollback       Boolean  @default(false)
   motivoRollback      String?
+}
+
+model TaxaOperacional {
+  id               String   @id @default(uuid())
+  ativoSigla       String   @unique
+  nome             String
+  valorPorContrato Decimal  @db.Decimal(10, 2)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("taxa_operacional")
 }
